@@ -1,0 +1,155 @@
+library (nparLD)
+library(ggplot2)
+library(pROC)
+
+# Initial setup
+likert <- c(1,2,3,4,5)
+simruns = 1000
+set.seed(52*6*simruns*2)
+
+# Between subjects probabilities
+group1 <-c(.25,.30,.25,.1,.1)
+group2 <-c(.1,.1,.25,.30,.25)
+
+# Within subjects probabilities
+condition1 <-c(.1,.25,.3,.25,.1)
+condition2 <-c(.1,.1,.25,.30,.25)
+condition3 <-c(.25,.30,.25,.1,.1)
+
+# Simulation run
+pvalues_ats <- matrix(nrow = simruns, ncol = 3)
+pvalues_anova <- matrix(nrow = simruns, ncol = 3)
+
+
+for (i in 1:simruns)
+{
+  
+A1 <- sample(likert, size=52, replace=T, prob=condition1*group1)
+B1 <- sample(likert, size=52, replace=T, prob=condition2*group1)
+C1 <- sample(likert, size=52, replace=T, prob=condition3*group1)
+
+A2 <- sample(likert, size=52, replace=T, prob=condition1*group2)
+B2 <- sample(likert, size=52, replace=T, prob=condition2*group2)
+C2 <- sample(likert, size=52, replace=T, prob=condition3*group2)
+
+DA1 <- data.frame(id=1:52,Group=1,Condition="A",response=A1)
+DB1 <- data.frame(id=1:52,Group=1,Condition="B",response=B1)
+DC1 <- data.frame(id=1:52,Group=1,Condition="C",response=C1)
+DA2 <- data.frame(id=53:104,Group=2,Condition="A",response=A2)
+DB2 <- data.frame(id=53:104,Group=2,Condition="B",response=B2)
+DC2 <- data.frame(id=53:104,Group=2,Condition="C",response=C2)
+
+experiment <- rbind(DA1,DB1,DC1,DA2,DB2,DC2)
+
+ats <- nparLD(response ~ Condition*Group, data = experiment, subject = 'id', description = TRUE)
+anova <- aov(response ~ group*Condition + Error(id/Condition), data=experiment)
+
+p_ats <- ats$ANOVA.test[7:9] #p values of group,condition and group*condition
+p_anova <- summary(anova)$"Error: Within"[[1]]$"Pr(>F)"[1:3]
+
+pvalues_ats[i,1:3] <- p_ats
+pvalues_anova[i,1:3] <- p_anova
+}
+
+simresults_ats <- data.frame(test="ATS",group=pvalues_ats[,1],condition=pvalues_ats[,2],interaction=pvalues_ats[,3])
+simresults_anova <- data.frame(test="ANOVA",group=pvalues_anova[,1],condition=pvalues_anova[,2],interaction=pvalues_anova[,3])
+simresults <- rbind(simresults_ats,simresults_anova)
+
+# Plotting histograms
+p7 <- ggplot(simresults, aes(x = condition, fill=test)) + # change x to evaluate group,condition,interaction
+  geom_histogram(aes(y=..count..),position="identity", alpha=0.6) +
+  scale_x_continuous(name = "p values") +
+  scale_y_continuous(name = "Count") +
+  ggtitle("Frequency histogram of p values - Condition") +
+  theme_bw() +
+  geom_vline(xintercept = 0.05, size = 1, colour = "#FF3721",
+           linetype = "dashed") +
+  scale_fill_brewer(palette="Accent")+
+  labs(fill="Test")
+
+p7
+
+# Null simulation
+null <- c(.2,.2,.2,.2,.2)
+
+nullpvalues_ats <- matrix(nrow = simruns, ncol = 3)
+nullpvalues_anova <- matrix(nrow = simruns, ncol = 3)
+
+for (i in 1:simruns)
+{
+nA1 <- sample(likert, size=52, replace=T, prob=null*null)
+nB1 <- sample(likert, size=52, replace=T, prob=null*null)
+nC1 <- sample(likert, size=52, replace=T, prob=null*null)
+
+nA2 <- sample(likert, size=52, replace=T, prob=null*null)
+nB2 <- sample(likert, size=52, replace=T, prob=null*null)
+nC2 <- sample(likert, size=52, replace=T, prob=null*null)
+
+nDA1 <- data.frame(id=1:52,Group=1,Condition="A",response=nA1)
+nDB1 <- data.frame(id=1:52,Group=1,Condition="B",response=nB1)
+nDC1 <- data.frame(id=1:52,Group=1,Condition="C",response=nC1)
+nDA2 <- data.frame(id=53:104,Group=2,Condition="A",response=nA2)
+nDB2 <- data.frame(id=53:104,Group=2,Condition="B",response=nB2)
+nDC2 <- data.frame(id=53:104,Group=2,Condition="C",response=nC2)
+
+nullexperiment <- rbind(nDA1,nDB1,nDC1,nDA2,nDB2,nDC2)
+
+nullats <- nparLD(response ~ Condition*Group, data = nullexperiment, subject = 'id', description = TRUE)
+nullanova <- aov(response ~ group*Condition + Error(id/Condition), data=nullexperiment)
+
+nullp_ats <- nullats$ANOVA.test[7:9] #p values of group,condition and group*condition
+nullp_anova <- summary(nullanova)$"Error: Within"[[1]]$"Pr(>F)"[1:3]
+
+nullpvalues_ats[i,1:3] <- nullp_ats
+nullpvalues_anova[i,1:3] <- nullp_anova
+
+}
+
+nullsimresults_ats <- data.frame(test="ATS",group=nullpvalues_ats[,1],condition=nullpvalues_ats[,2],interaction=nullpvalues_ats[,3])
+nullsimresults_anova <- data.frame(test="ANOVA",group=nullpvalues_anova[,1],condition=nullpvalues_anova[,2],interaction=nullpvalues_anova[,3])
+nullsimresults <- rbind(nullsimresults_ats,nullsimresults_anova)
+
+# Plotting histograms from null simulation
+p8 <- ggplot(nullsimresults, aes(x = interaction, fill=test)) + # change x to evaluate group,condition,interaction
+  geom_histogram(aes(y=..count..),position="identity", alpha=0.6) +
+  scale_x_continuous(name = "p values") +
+  scale_y_continuous(name = "Count") +
+  ggtitle("Frequency histogram of p values") +
+  theme_bw() +
+  geom_vline(xintercept = 0.05, size = 1, colour = "#FF3721",
+             linetype = "dashed") +
+  scale_fill_brewer(palette="Accent")+
+  labs(fill="Test")
+
+# Compute ROC
+simresults$type=1
+nullsimresults$type=0
+dataROC <- rbind(simresults,nullsimresults)
+dataROC$b=(dataROC$group<0.05)*1
+dataROC$w=(dataROC$condition<0.05)*1
+
+isats = dataROC$test == "ATS"
+roc_atsbetween <- roc(dataROC[isats,]$type,dataROC[isats,]$b)
+auc(roc_atsbetween)
+
+roc_atswithin <- roc(dataROC[isats,]$type,dataROC[isats,]$w)
+auc(roc_atswithin)
+
+isanova = dataROC$test == "ANOVA"
+roc_anovabetween <- roc(dataROC[isanova,]$type,dataROC[isanova,]$b)
+auc(roc_anovabetween)
+
+roc_anovawithin <- roc(dataROC[isanova,]$type,dataROC[isanova,]$w)
+auc(roc_anovawithin)
+
+# Plot ROC
+plot(roc_atswithin,main="ROC - Within subjects factor",col="blue")
+plot(roc_anovawithin,add=TRUE,col="red")
+legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
+       col=c("blue", "red"), lty=1, cex=0.8)
+
+
+plot(roc_atsbetween,main="ROC - Between subjects factor",col="blue")
+plot(roc_anovabetween,add=TRUE,col="red")
+legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
+       col=c("blue", "red"), lty=1, cex=0.8)
