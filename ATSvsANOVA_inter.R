@@ -25,11 +25,11 @@ for (i in 1:simruns)
 {
   
 A1 <- sample(likert, size=52, replace=T, prob=condition1*group1)
-B1 <- sample(likert, size=52, replace=T, prob=condition2*group1)
+B1 <- sample(likert, size=52, replace=T, prob=condition2*(group1-.1))
 C1 <- sample(likert, size=52, replace=T, prob=condition3*group1)
 
 A2 <- sample(likert, size=52, replace=T, prob=condition1*group2)
-B2 <- sample(likert, size=52, replace=T, prob=condition2*group2)
+B2 <- sample(likert, size=52, replace=T, prob=condition2*(group1-.1))
 C2 <- sample(likert, size=52, replace=T, prob=condition3*group2)
 
 DA1 <- data.frame(id=1:52,Group=1,Condition="A",response=A1)
@@ -56,7 +56,7 @@ simresults_anova <- data.frame(test="ANOVA",group=pvalues_anova[,1],condition=pv
 simresults <- rbind(simresults_ats,simresults_anova)
 
 # Plotting histograms
-p7 <- ggplot(simresults, aes(x = group, fill=test)) + # change x to evaluate group,condition,interaction
+p7 <- ggplot(simresults, aes(x = interaction, fill=test)) + # change x to evaluate group,condition,interaction
   geom_histogram(aes(y=..count..),position="identity", alpha=0.6) +
   scale_x_continuous(name = "p values") +
   scale_y_continuous(name = "Count") +
@@ -70,6 +70,8 @@ p7 <- ggplot(simresults, aes(x = group, fill=test)) + # change x to evaluate gro
         plot.title = element_text(size=18,hjust = 0.5,face="bold"),axis.title=element_text(size=14,face="bold"))
 
 p7
+
+plot(ats)
 
 # Null simulation
 null <- c(.2,.2,.2,.2,.2)
@@ -129,6 +131,7 @@ nullsimresults$type=0
 dataROC <- rbind(simresults,nullsimresults)
 dataROC$b=(dataROC$group<0.05)*1
 dataROC$w=(dataROC$condition<0.05)*1
+dataROC$i=(dataROC$interaction<0.05)*1
 
 isats = dataROC$test == "ATS"
 roc_atsbetween <- roc(dataROC[isats,]$type,dataROC[isats,]$b)
@@ -137,12 +140,18 @@ auc(roc_atsbetween)
 roc_atswithin <- roc(dataROC[isats,]$type,dataROC[isats,]$w)
 auc(roc_atswithin)
 
+roc_atsinter <- roc(dataROC[isats,]$type,dataROC[isats,]$i)
+auc(roc_atsinter)
+
 isanova = dataROC$test == "ANOVA"
 roc_anovabetween <- roc(dataROC[isanova,]$type,dataROC[isanova,]$b)
 auc(roc_anovabetween)
 
 roc_anovawithin <- roc(dataROC[isanova,]$type,dataROC[isanova,]$w)
 auc(roc_anovawithin)
+
+roc_anovainter <- roc(dataROC[isanova,]$type,dataROC[isanova,]$i)
+auc(roc_anovainter)
 
 # Plot ROC
 plot(roc_atswithin,main="ROC - Within subjects factor",col="black")
@@ -152,5 +161,10 @@ legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
 
 plot(roc_atsbetween,main="ROC - Between subjects factor",col="black")
 plot(roc_anovabetween,add=TRUE,col="red")
+legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
+       col=c("black", "red"), lty=1, cex=0.8)
+
+plot(roc_atsinter,main="ROC - Interaction",col="black")
+plot(roc_anovainter,add=TRUE,col="red")
 legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
        col=c("black", "red"), lty=1, cex=0.8)
