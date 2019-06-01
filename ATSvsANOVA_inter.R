@@ -8,13 +8,13 @@ simruns = 1000
 set.seed(52*6*simruns*2)
 
 # Between subjects probabilities
-group1 <-c(.25,.30,.25,.1,.1)
-group2 <-c(.1,.1,.25,.30,.25)
+Female <-c(.25,.30,.25,.1,.1)
+Male <-c(.1,.1,.25,.30,.25)
 
 # Within subjects probabilities
-condition1 <-c(.1,.25,.3,.25,.1)
-condition2 <-c(.1,.1,.25,.30,.25)
-condition3 <-c(.25,.30,.25,.1,.1)
+Anthropomorphic <-c(.1,.25,.3,.25,.1)
+Zoomorphic <-c(.1,.1,.25,.30,.25)
+Machinelike <-c(.25,.30,.25,.1,.1)
 
 # Simulation run
 pvalues_ats <- matrix(nrow = simruns, ncol = 3)
@@ -24,22 +24,30 @@ pvalues_anova <- matrix(nrow = simruns, ncol = 3)
 for (i in 1:simruns)
 {
   
-A1 <- sample(likert, size=52, replace=T, prob=condition1*group1)
-B1 <- sample(likert, size=52, replace=T, prob=condition2*(group1-.1))
-C1 <- sample(likert, size=52, replace=T, prob=condition3*group1)
+A1 <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Female)
+B1 <- sample(likert, size=52, replace=T, 
+               prob=Zoomorphic*(Female-.1))
+C1 <- sample(likert, size=52, replace=T, prob=Machinelike*Female)
+A2 <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Male)
+B2 <- sample(likert, size=52, replace=T, 
+               prob=Zoomorphic*(Male-.1))
+C2 <- sample(likert, size=52, replace=T, prob=Machinelike*Male)
 
-A2 <- sample(likert, size=52, replace=T, prob=condition1*group2)
-B2 <- sample(likert, size=52, replace=T, prob=condition2*(group1-.1))
-C2 <- sample(likert, size=52, replace=T, prob=condition3*group2)
+AF <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Female)
+ZF <- sample(likert, size=52, replace=T, prob=Zoomorphic*Female)
+MF <- sample(likert, size=52, replace=T, prob=Machinelike*Female)
+AM <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Male)
+ZM <- sample(likert, size=52, replace=T, prob=Zoomorphic*Male)
+MM <- sample(likert, size=52, replace=T, prob=Machinelike*Male)
 
-DA1 <- data.frame(id=1:52,Group=1,Condition="A",response=A1)
-DB1 <- data.frame(id=1:52,Group=1,Condition="B",response=B1)
-DC1 <- data.frame(id=1:52,Group=1,Condition="C",response=C1)
-DA2 <- data.frame(id=53:104,Group=2,Condition="A",response=A2)
-DB2 <- data.frame(id=53:104,Group=2,Condition="B",response=B2)
-DC2 <- data.frame(id=53:104,Group=2,Condition="C",response=C2)
+DAF <- data.frame(id=1:52,Group="Female",Condition="Anthropomorphic",response=AF)
+DZF <- data.frame(id=1:52,Group="Female",Condition="Zoomorphic",response=ZF)
+DMF <- data.frame(id=1:52,Group="Female",Condition="Machinelike",response=MF)
+DAM <- data.frame(id=53:104,Group="Male",Condition="Anthropomorphic",response=AM)
+DZM <- data.frame(id=53:104,Group="Male",Condition="Zoomorphic",response=ZM)
+DMM <- data.frame(id=53:104,Group="Male",Condition="Machinelike",response=MM)
 
-experiment <- rbind(DA1,DB1,DC1,DA2,DB2,DC2)
+experiment <- rbind(DAF,DZF,DMF,DAM,DZM,DMM)
 
 ats <- nparLD(response ~ Condition*Group, data = experiment, subject = 'id', description = TRUE)
 anova <- aov(response ~ Group*Condition + Error(id/Condition), data=experiment)
@@ -60,7 +68,7 @@ p7 <- ggplot(simresults, aes(x = interaction, fill=test)) + # change x to evalua
   geom_histogram(aes(y=..count..),position="identity", alpha=0.6) +
   scale_x_continuous(name = "p values") +
   scale_y_continuous(name = "Count") +
-  ggtitle("Distribution of p values - Group") +
+  ggtitle("Distribution of p values - Sex") +
   theme_bw() +
   geom_vline(xintercept = 0.05, size = 1, colour = "#FF3721",
            linetype = "dashed") +
@@ -89,12 +97,12 @@ nA2 <- sample(likert, size=52, replace=T, prob=null*null)
 nB2 <- sample(likert, size=52, replace=T, prob=null*null)
 nC2 <- sample(likert, size=52, replace=T, prob=null*null)
 
-nDA1 <- data.frame(id=1:52,Group=1,Condition="A",response=nA1)
-nDB1 <- data.frame(id=1:52,Group=1,Condition="B",response=nB1)
-nDC1 <- data.frame(id=1:52,Group=1,Condition="C",response=nC1)
-nDA2 <- data.frame(id=53:104,Group=2,Condition="A",response=nA2)
-nDB2 <- data.frame(id=53:104,Group=2,Condition="B",response=nB2)
-nDC2 <- data.frame(id=53:104,Group=2,Condition="C",response=nC2)
+nDA1 <- data.frame(id=1:52,Group="Female",Condition="Anthropomorphic",response=nA1)
+nDB1 <- data.frame(id=1:52,Group="Female",Condition="Zoomorphic",response=nB1)
+nDC1 <- data.frame(id=1:52,Group="Female",Condition="Machinelike",response=nC1)
+nDA2 <- data.frame(id=53:104,Group="Male",Condition="Anthropomorphic",response=nA2)
+nDB2 <- data.frame(id=53:104,Group="Male",Condition="Zoomorphic",response=nB2)
+nDC2 <- data.frame(id=53:104,Group="Male",Condition="Machinelike",response=nC2)
 
 nullexperiment <- rbind(nDA1,nDB1,nDC1,nDA2,nDB2,nDC2)
 
@@ -154,12 +162,12 @@ roc_anovainter <- roc(dataROC[isanova,]$type,dataROC[isanova,]$i)
 auc(roc_anovainter)
 
 # Plot ROC
-plot(roc_atswithin,main="ROC - Within subjects factor",col="black")
+plot(roc_atswithin,main="ROC - Condition",col="black")
 plot(roc_anovawithin,add=TRUE,col="red")
 legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
        col=c("black", "red"), lty=1, cex=0.8)
 
-plot(roc_atsbetween,main="ROC - Between subjects factor",col="black")
+plot(roc_atsbetween,main="ROC - Group",col="black")
 plot(roc_anovabetween,add=TRUE,col="red")
 legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
        col=c("black", "red"), lty=1, cex=0.8)
@@ -168,3 +176,4 @@ plot(roc_atsinter,main="ROC - Interaction",col="black")
 plot(roc_anovainter,add=TRUE,col="red")
 legend(0.45, 0.5, legend=c("ATS", "ANOVA"),
        col=c("black", "red"), lty=1, cex=0.8)
+
