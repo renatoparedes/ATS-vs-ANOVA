@@ -24,20 +24,13 @@ pvalues_anova <- matrix(nrow = simruns, ncol = 3)
 for (i in 1:simruns)
 {
   
-A1 <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Female)
-B1 <- sample(likert, size=52, replace=T, 
-               prob=Zoomorphic*(Female-.1))
-C1 <- sample(likert, size=52, replace=T, prob=Machinelike*Female)
-A2 <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Male)
-B2 <- sample(likert, size=52, replace=T, 
-               prob=Zoomorphic*(Male-.1))
-C2 <- sample(likert, size=52, replace=T, prob=Machinelike*Male)
-
 AF <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Female)
-ZF <- sample(likert, size=52, replace=T, prob=Zoomorphic*Female)
+ZF <- sample(likert, size=52, replace=T, 
+               prob=Zoomorphic*(Female-.1))
 MF <- sample(likert, size=52, replace=T, prob=Machinelike*Female)
 AM <- sample(likert, size=52, replace=T, prob=Anthropomorphic*Male)
-ZM <- sample(likert, size=52, replace=T, prob=Zoomorphic*Male)
+ZM <- sample(likert, size=52, replace=T, 
+               prob=Zoomorphic*(Male-.1))
 MM <- sample(likert, size=52, replace=T, prob=Machinelike*Male)
 
 DAF <- data.frame(id=1:52,Group="Female",Condition="Anthropomorphic",response=AF)
@@ -80,6 +73,7 @@ p7 <- ggplot(simresults, aes(x = interaction, fill=test)) + # change x to evalua
 p7
 
 plot(ats)
+title(ylab = "RTE",cex.lab=1.2)
 
 # Null simulation
 null <- c(.2,.2,.2,.2,.2)
@@ -132,6 +126,9 @@ p8 <- ggplot(nullsimresults, aes(x = interaction, fill=test)) + # change x to ev
              linetype = "dashed") +
   scale_fill_brewer(palette="Accent")+
   labs(fill="Test")
+
+plot(nullats)
+title(ylab = "RTE",cex.lab=1.2)
 
 # Compute ROC
 simresults$type=1
